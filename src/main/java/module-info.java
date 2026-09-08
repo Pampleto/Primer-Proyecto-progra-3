@@ -4,5 +4,6 @@ module com.example.primerproyectoprogra3 {
 
 
     opens com.example.primerproyectoprogra3 to javafx.fxml;
+    opens controlador to javafx.fxml;
     exports com.example.primerproyectoprogra3;
 }
