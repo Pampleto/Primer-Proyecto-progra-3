@@ -4,18 +4,22 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import modelo.PlanBasico;
-import modelo.PlanCoberturaTotal;
-import modelo.PlanDeportesExtremos;
+import modelo.PlanSeguro;
 import modelo.TipoDestino;
 import modelo.Viaje;
+import servicio.CotizadorServicio;
+import util.Validador;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Controla la vista del cotizador de seguros de viaje.
  *
  * Recibe el destino y la cantidad de dias ingresados por el usuario,
- * construye un Viaje y calcula de forma simultanea el precio de los
- * tres planes de cobertura mostrandolos en tarjetas comparativas.
+ * construye un Viaje y delega en CotizadorServicio el calculo
+ * simultaneo del precio de los tres planes de cobertura, mostrando
+ * los resultados en tarjetas comparativas.
  */
 public class CotizadorController {
 
@@ -67,10 +71,11 @@ public class CotizadorController {
     @FXML
     private Label precioExtremos;
 
-    // Planes de seguro disponibles en el sistema.
-    private final PlanBasico planBasico = new PlanBasico();
-    private final PlanCoberturaTotal planCoberturaTotal = new PlanCoberturaTotal();
-    private final PlanDeportesExtremos planDeportesExtremos = new PlanDeportesExtremos();
+    // Motor de cotizacion encargado de calcular los precios de los planes.
+    private final CotizadorServicio cotizadorServicio = new CotizadorServicio();
+
+    // Planes disponibles en el sistema en el orden basico, total y extremos.
+    private final List<PlanSeguro> planes = cotizadorServicio.obtenerPlanes();
 
     /**
      * Inicializa la vista del cotizador cargando los valores
@@ -86,14 +91,14 @@ public class CotizadorController {
         comboTipoDestino.setValue(TipoDestino.NACIONAL);
         campoDias.setText("7");
 
-        descripcionBasico.setText(planBasico.getDescripcion());
-        tarifaBasico.setText(formatearColones(planBasico.getTarifaDiaria()));
+        descripcionBasico.setText(planes.get(0).getDescripcion());
+        tarifaBasico.setText(formatearColones(planes.get(0).getTarifaDiaria()));
 
-        descripcionTotal.setText(planCoberturaTotal.getDescripcion());
-        tarifaTotal.setText(formatearColones(planCoberturaTotal.getTarifaDiaria()));
+        descripcionTotal.setText(planes.get(1).getDescripcion());
+        tarifaTotal.setText(formatearColones(planes.get(1).getTarifaDiaria()));
 
-        descripcionExtremos.setText(planDeportesExtremos.getDescripcion());
-        tarifaExtremos.setText(formatearColones(planDeportesExtremos.getTarifaDiaria()));
+        descripcionExtremos.setText(planes.get(2).getDescripcion());
+        tarifaExtremos.setText(formatearColones(planes.get(2).getTarifaDiaria()));
 
         campoDias.textProperty().addListener((observable, anterior, nuevo) -> {
             if (nuevo != null && !nuevo.isBlank()) {
@@ -114,7 +119,8 @@ public class CotizadorController {
     protected void cotizar() {
         recalcularCotizacion();
     }
-/**
+
+    /**
      * Muestra el mensaje de contratacion para el plan basico.
      *
      * No recibe parametros.
@@ -122,7 +128,7 @@ public class CotizadorController {
      */
     @FXML
     protected void contratarBasico() {
-        mostrarMensajeContratacion(planBasico.getNombre());
+        mostrarMensajeContratacion(planes.get(0).getNombre());
     }
 
     /**
@@ -133,7 +139,7 @@ public class CotizadorController {
      */
     @FXML
     protected void contratarTotal() {
-        mostrarMensajeContratacion(planCoberturaTotal.getNombre());
+        mostrarMensajeContratacion(planes.get(1).getNombre());
     }
 
     /**
@@ -144,12 +150,16 @@ public class CotizadorController {
      */
     @FXML
     protected void contratarExtremos() {
-        mostrarMensajeContratacion(planDeportesExtremos.getNombre());
+        mostrarMensajeContratacion(planes.get(2).getNombre());
     }
 
     /**
      * Calcula el precio de los tres planes para el viaje ingresado
      * y actualiza las etiquetas de precio de cada tarjeta.
+     *
+     * Solicita a CotizadorServicio el calculo simultaneo de los tres
+     * precios para el viaje construido con el destino y los dias.
+     * Se invoca cada vez que el usuario modifica la cantidad de dias.
      *
      * Valida que la cantidad de dias sea un numero entero positivo.
      * Si los datos son invalidos muestra un mensaje de error.
@@ -158,24 +168,25 @@ public class CotizadorController {
      * No retorna ningun valor.
      */
     private void recalcularCotizacion() {
-        try {
-            int dias = Integer.parseInt(campoDias.getText().trim());
-            if (dias <= 0) {
-                mostrarPreciosSinDatos();
-                mensajeEstado.setText("La cantidad de dias debe ser mayor que cero.");
-                return;
-            }
-            TipoDestino destino = comboTipoDestino.getValue();
-            Viaje viaje = new Viaje(destino, dias);
+        String textoDias = campoDias.getText().trim();
 
-            precioBasico.setText(formatearColones(planBasico.calcularPrecio(viaje)));
-            precioTotal.setText(formatearColones(planCoberturaTotal.calcularPrecio(viaje)));
-            precioExtremos.setText(formatearColones(planDeportesExtremos.calcularPrecio(viaje)));
-            mensajeEstado.setText("Cotizacion actualizada para " + dias + " dias.");
-        } catch (NumberFormatException e) {
+        if (!Validador.esCantidadDiasValida(textoDias)) {
             mostrarPreciosSinDatos();
-            mensajeEstado.setText("La cantidad de dias debe ser un numero entero.");
+            mensajeEstado.setText("La cantidad de dias debe ser un numero entero mayor que cero.");
+            return;
         }
+
+        int dias = Integer.parseInt(textoDias);
+        Viaje viaje = new Viaje(comboTipoDestino.getValue(), dias);
+
+        // CotizadorServicio calcula los tres precios simultaneamente.
+        Map<String, Double> precios = cotizadorServicio.cotizar(viaje);
+
+        precioBasico.setText(formatearPrecio(precios, planes.get(0)));
+        precioTotal.setText(formatearPrecio(precios, planes.get(1)));
+        precioExtremos.setText(formatearPrecio(precios, planes.get(2)));
+
+        mensajeEstado.setText("Cotizacion actualizada para " + dias + " dias.");
     }
 
     /**
@@ -203,6 +214,21 @@ public class CotizadorController {
     private void mostrarMensajeContratacion(String nombrePlan) {
         mensajeEstado.setText("La contratacion del " + nombrePlan
                 + " estara disponible en la siguiente fase del proyecto.");
+    }
+
+    /**
+     * Obtiene el precio formateado de un plan dentro de una cotizacion.
+     *
+     * @param precios mapa con los precios calculados para cada plan
+     * @param plan plan del cual se desea obtener el precio final
+     * @return texto del precio formateado o un guion si el precio no existe
+     */
+    private String formatearPrecio(Map<String, Double> precios, PlanSeguro plan) {
+        Double precio = precios.get(plan.getNombre());
+        if (precio == null) {
+            return "-";
+        }
+        return formatearColones(precio);
     }
 
     /**
