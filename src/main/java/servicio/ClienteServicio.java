@@ -34,7 +34,7 @@ public class ClienteServicio {
     /**
      * Registra un nuevo cliente utilizando el nombre y la edad recibidos.
      *
-     * Primero valida que el nombre contenga informacion
+     * Primero valida que el nombre contenga solamente letras y espacios
      * y que la edad sea un numero entero mayor que cero.
      *
      * Recibe el nombre y la edad del cliente como texto.
@@ -47,9 +47,9 @@ public class ClienteServicio {
      */
     public Cliente registrarCliente(String nombre, String edadTexto) {
 
-        if (!Validador.esTextoValido(nombre)) {
+        if (!Validador.esNombreValido(nombre)) {
             throw new IllegalArgumentException(
-                    "Debe ingresar el nombre del cliente."
+                    "El nombre solo puede contener letras y espacios."
             );
         }
 
@@ -108,8 +108,8 @@ public class ClienteServicio {
     /**
      * Modifica el nombre y la edad de un cliente existente.
      *
-     * Primero valida los nuevos datos y posteriormente busca
-     * al cliente utilizando su identificador.
+     * Primero valida que el nombre contenga solamente letras y espacios
+     * y que la edad sea un numero entero mayor que cero.
      *
      * Recibe el ID del cliente, el nuevo nombre y la nueva edad.
      * Retorna true si el cliente fue modificado correctamente
@@ -127,9 +127,9 @@ public class ClienteServicio {
             String edadTexto
     ) {
 
-        if (!Validador.esTextoValido(nombre)) {
+        if (!Validador.esNombreValido(nombre)) {
             throw new IllegalArgumentException(
-                    "Debe ingresar el nombre del cliente."
+                    "El nombre solo puede contener letras y espacios."
             );
         }
 

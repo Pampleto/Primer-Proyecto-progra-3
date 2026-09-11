@@ -13,6 +13,21 @@ public class Validador {
     }
 
     /**
+     * Verifica que un nombre contenga solamente letras y espacios.
+     *
+     * @param nombre nombre que se desea validar
+     * @return true si el nombre contiene solamente letras y espacios,
+     * false en caso contrario
+     */
+    public static boolean esNombreValido(String nombre) {
+        if (!esTextoValido(nombre)) {
+            return false;
+        }
+
+        return nombre.trim().matches("[\\p{L} ]+");
+    }
+
+    /**
      * Verifica si un texto representa un número entero.
      *
      * @param texto texto que se desea validar
