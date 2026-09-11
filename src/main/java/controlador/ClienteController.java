@@ -14,9 +14,8 @@ import servicio.ClienteServicio;
 /**
  * Controla la vista de gestion de clientes.
  *
- * Permite capturar los datos de un cliente, solicitar su registro
- * mediante ClienteServicio y mostrar los clientes registrados
- * dentro de una tabla.
+ * Permite registrar clientes, mostrar los clientes registrados
+ * en una tabla, seleccionar un cliente y modificar sus datos.
  */
 public class ClienteController {
 
@@ -48,19 +47,22 @@ public class ClienteController {
     @FXML
     private TableColumn<Cliente, Integer> columnaEdad;
 
-    // Servicio encargado de gestionar las operaciones de los clientes.
-    private final ClienteServicio clienteServicio = new ClienteServicio();
+    // Servicio encargado de gestionar los clientes.
+    private final ClienteServicio clienteServicio =
+            new ClienteServicio();
 
-    // Lista observable utilizada solamente para mostrar los clientes en la tabla.
+    // Lista observable utilizada para mostrar los clientes en la tabla.
     private final ObservableList<Cliente> clientes =
             FXCollections.observableArrayList();
 
+    // Guarda el cliente que el usuario selecciona en la tabla.
+    private Cliente clienteSeleccionado;
+
     /**
-     * Inicializa la vista y configura las columnas de la tabla
-     * para mostrar los datos del modelo Cliente.
+     * Inicializa la vista de gestion de clientes.
      *
-     * Tambien carga en la tabla los clientes almacenados
-     * mediante ClienteServicio.
+     * Configura las columnas de la tabla y detecta cuando
+     * el usuario selecciona un cliente.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -88,19 +90,24 @@ public class ClienteController {
 
         tablaClientes.setItems(clientes);
 
+        tablaClientes.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observable, anterior, seleccionado) -> {
+
+                    if (seleccionado != null) {
+                        cargarClienteSeleccionado(seleccionado);
+                    }
+                });
+
         actualizarTabla();
     }
 
     /**
-     * Registra un nuevo cliente utilizando los datos ingresados
-     * en los campos del formulario.
+     * Registra un nuevo cliente utilizando los datos
+     * ingresados en el formulario.
      *
-     * Envia el nombre y la edad a ClienteServicio, donde se realizan
-     * las validaciones y se almacena el cliente en el repositorio.
-     *
-     * Si el registro es correcto, actualiza la tabla y limpia
-     * los campos del formulario. Si ocurre un error de validacion,
-     * muestra el mensaje correspondiente en la interfaz.
+     * Envia el nombre y la edad al servicio para validar
+     * y almacenar el cliente.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -113,28 +120,119 @@ public class ClienteController {
 
         try {
 
-            clienteServicio.registrarCliente(nombre, edad);
+            clienteServicio.registrarCliente(
+                    nombre,
+                    edad
+            );
 
             actualizarTabla();
+
+            limpiarFormulario();
 
             mensajeEstado.setText(
                     "Cliente registrado correctamente."
             );
 
-            campoNombre.clear();
-            campoEdad.clear();
-
         } catch (IllegalArgumentException e) {
 
-            mensajeEstado.setText(e.getMessage());
+            mensajeEstado.setText(
+                    e.getMessage()
+            );
         }
     }
 
     /**
-     * Actualiza la informacion mostrada en la tabla de clientes.
+     * Modifica los datos del cliente seleccionado.
      *
-     * Obtiene todos los clientes almacenados mediante ClienteServicio
-     * y los coloca dentro de la lista observable utilizada por la tabla.
+     * Utiliza el identificador del cliente seleccionado
+     * junto con el nuevo nombre y edad ingresados.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
+     */
+    @FXML
+    protected void modificarCliente() {
+
+        if (clienteSeleccionado == null) {
+
+            mensajeEstado.setText(
+                    "Debe seleccionar un cliente de la tabla."
+            );
+
+            return;
+        }
+
+        String nombre = campoNombre.getText();
+        String edad = campoEdad.getText();
+
+        try {
+
+            boolean modificado =
+                    clienteServicio.modificarCliente(
+                            clienteSeleccionado.getId(),
+                            nombre,
+                            edad
+                    );
+
+            if (modificado) {
+
+                actualizarTabla();
+
+                limpiarFormulario();
+
+                mensajeEstado.setText(
+                        "Cliente modificado correctamente."
+                );
+
+            } else {
+
+                mensajeEstado.setText(
+                        "No se encontro el cliente seleccionado."
+                );
+            }
+
+        } catch (IllegalArgumentException e) {
+
+            mensajeEstado.setText(
+                    e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Carga los datos del cliente seleccionado
+     * dentro de los campos del formulario.
+     *
+     * Recibe el cliente seleccionado en la tabla.
+     * No retorna ningun valor.
+     *
+     * @param cliente cliente seleccionado en la tabla
+     */
+    private void cargarClienteSeleccionado(
+            Cliente cliente
+    ) {
+
+        clienteSeleccionado = cliente;
+
+        campoNombre.setText(
+                cliente.getNombre()
+        );
+
+        campoEdad.setText(
+                String.valueOf(cliente.getEdad())
+        );
+
+        mensajeEstado.setText(
+                "Cliente seleccionado: "
+                        + cliente.getNombre()
+        );
+    }
+
+    /**
+     * Actualiza los clientes mostrados en la tabla.
+     *
+     * Obtiene todos los clientes desde ClienteServicio
+     * y los coloca dentro de la lista observable.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -144,5 +242,26 @@ public class ClienteController {
         clientes.setAll(
                 clienteServicio.obtenerClientes()
         );
+
+        tablaClientes.refresh();
+    }
+
+    /**
+     * Limpia los campos del formulario y elimina
+     * la seleccion actual de la tabla.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
+     */
+    private void limpiarFormulario() {
+
+        campoNombre.clear();
+        campoEdad.clear();
+
+        clienteSeleccionado = null;
+
+        tablaClientes
+                .getSelectionModel()
+                .clearSelection();
     }
 }
