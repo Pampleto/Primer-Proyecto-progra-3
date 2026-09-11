@@ -9,13 +9,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import modelo.Cliente;
+import servicio.ClienteServicio;
 
 /**
- * Controla la vista de registro de clientes.
+ * Controla la vista de gestion de clientes.
  *
- * Permite capturar el nombre y la edad de un cliente,
- * registrarlo en una lista en memoria y mostrarlo
- * en una tabla.
+ * Permite capturar los datos de un cliente, solicitar su registro
+ * mediante ClienteServicio y mostrar los clientes registrados
+ * dentro de una tabla.
  */
 public class ClienteController {
 
@@ -31,7 +32,7 @@ public class ClienteController {
     @FXML
     private Label mensajeEstado;
 
-    // Tabla donde se listan los clientes registrados.
+    // Tabla donde se muestran los clientes registrados.
     @FXML
     private TableView<Cliente> tablaClientes;
 
@@ -47,53 +48,101 @@ public class ClienteController {
     @FXML
     private TableColumn<Cliente, Integer> columnaEdad;
 
-    // Lista observable con los clientes registrados en memoria.
-    private final ObservableList<Cliente> clientes = FXCollections.observableArrayList();
+    // Servicio encargado de gestionar las operaciones de los clientes.
+    private final ClienteServicio clienteServicio = new ClienteServicio();
+
+    // Lista observable utilizada solamente para mostrar los clientes en la tabla.
+    private final ObservableList<Cliente> clientes =
+            FXCollections.observableArrayList();
 
     /**
-     * Inicializa la vista de clientes configurando las columnas
-     * de la tabla con los datos del modelo Cliente.
+     * Inicializa la vista y configura las columnas de la tabla
+     * para mostrar los datos del modelo Cliente.
+     *
+     * Tambien carga en la tabla los clientes almacenados
+     * mediante ClienteServicio.
      *
      * No recibe parametros.
      * No retorna ningun valor.
      */
     @FXML
     protected void initialize() {
-        columnaId.setCellValueFactory(dato -> new ReadOnlyObjectWrapper<>(dato.getValue().getId()));
-        columnaNombre.setCellValueFactory(dato -> new ReadOnlyObjectWrapper<>(dato.getValue().getNombre()));
-        columnaEdad.setCellValueFactory(dato -> new ReadOnlyObjectWrapper<>(dato.getValue().getEdad()));
+
+        columnaId.setCellValueFactory(
+                dato -> new ReadOnlyObjectWrapper<>(
+                        dato.getValue().getId()
+                )
+        );
+
+        columnaNombre.setCellValueFactory(
+                dato -> new ReadOnlyObjectWrapper<>(
+                        dato.getValue().getNombre()
+                )
+        );
+
+        columnaEdad.setCellValueFactory(
+                dato -> new ReadOnlyObjectWrapper<>(
+                        dato.getValue().getEdad()
+                )
+        );
+
         tablaClientes.setItems(clientes);
+
+        actualizarTabla();
     }
 
     /**
-     * Registra un nuevo cliente con los datos del formulario.
+     * Registra un nuevo cliente utilizando los datos ingresados
+     * en los campos del formulario.
      *
-     * Valida que el nombre no este vacio y que la edad sea un numero
-     * entero positivo. Si los datos son correctos crea un objeto Cliente,
-     * lo agrega a la lista y limpia el formulario.
+     * Envia el nombre y la edad a ClienteServicio, donde se realizan
+     * las validaciones y se almacena el cliente en el repositorio.
+     *
+     * Si el registro es correcto, actualiza la tabla y limpia
+     * los campos del formulario. Si ocurre un error de validacion,
+     * muestra el mensaje correspondiente en la interfaz.
      *
      * No recibe parametros.
      * No retorna ningun valor.
      */
     @FXML
     protected void registrarCliente() {
-        String nombre = campoNombre.getText().trim();
-        if (nombre.isEmpty()) {
-            mensajeEstado.setText("Debe ingresar el nombre del cliente.");
-            return;
-        }
+
+        String nombre = campoNombre.getText();
+        String edad = campoEdad.getText();
+
         try {
-            int edad = Integer.parseInt(campoEdad.getText().trim());
-            if (edad <= 0) {
-                mensajeEstado.setText("La edad debe ser un numero mayor que cero.");
-                return;
-            }
-            clientes.add(new Cliente(nombre, edad));
-            mensajeEstado.setText("Cliente registrado correctamente.");
+
+            clienteServicio.registrarCliente(nombre, edad);
+
+            actualizarTabla();
+
+            mensajeEstado.setText(
+                    "Cliente registrado correctamente."
+            );
+
             campoNombre.clear();
             campoEdad.clear();
-        } catch (NumberFormatException e) {
-            mensajeEstado.setText("La edad debe ser un numero entero.");
+
+        } catch (IllegalArgumentException e) {
+
+            mensajeEstado.setText(e.getMessage());
         }
+    }
+
+    /**
+     * Actualiza la informacion mostrada en la tabla de clientes.
+     *
+     * Obtiene todos los clientes almacenados mediante ClienteServicio
+     * y los coloca dentro de la lista observable utilizada por la tabla.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
+     */
+    private void actualizarTabla() {
+
+        clientes.setAll(
+                clienteServicio.obtenerClientes()
+        );
     }
 }
