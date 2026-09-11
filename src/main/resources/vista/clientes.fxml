@@ -23,106 +23,98 @@
         <URL value="@../css/estilos.css"/>
     </stylesheets>
 
-    <children>
+    <Label styleClass="titulo-vista"
+           text="Registro de Clientes"/>
 
-        <Label styleClass="titulo-vista"
-               text="Registro de Clientes"/>
+    <GridPane hgap="12.0"
+              vgap="12.0"
+              styleClass="formulario">
 
-        <GridPane hgap="12.0"
-                  vgap="12.0"
-                  styleClass="formulario">
+        <columnConstraints>
+            <ColumnConstraints hgrow="NEVER"
+                               minWidth="100.0"/>
 
-            <columnConstraints>
-                <ColumnConstraints hgrow="NEVER"
-                                   minWidth="100.0"/>
+            <ColumnConstraints hgrow="ALWAYS"
+                               maxWidth="320.0"
+                               minWidth="220.0"/>
+        </columnConstraints>
 
-                <ColumnConstraints hgrow="ALWAYS"
-                                   maxWidth="320.0"
-                                   minWidth="220.0"/>
-            </columnConstraints>
+        <rowConstraints>
+            <RowConstraints/>
+            <RowConstraints/>
+        </rowConstraints>
 
-            <rowConstraints>
-                <RowConstraints/>
-                <RowConstraints/>
-            </rowConstraints>
+        <Label text="Nombre:"/>
 
-            <children>
+        <TextField fx:id="campoNombre"
+                   promptText="Nombre completo del cliente"
+                   GridPane.columnIndex="1"/>
 
-                <Label text="Nombre:"/>
+        <Label text="Edad:"
+               GridPane.rowIndex="1"/>
 
-                <TextField fx:id="campoNombre"
-                           promptText="Nombre completo del cliente"
-                           GridPane.columnIndex="1"/>
+        <TextField fx:id="campoEdad"
+                   promptText="Edad del cliente"
+                   GridPane.columnIndex="1"
+                   GridPane.rowIndex="1"/>
 
-                <Label text="Edad:"
-                       GridPane.rowIndex="1"/>
+        <padding>
+            <Insets bottom="16.0"
+                    left="16.0"
+                    right="16.0"
+                    top="16.0"/>
+        </padding>
 
-                <TextField fx:id="campoEdad"
-                           promptText="Edad del cliente"
-                           GridPane.columnIndex="1"
-                           GridPane.rowIndex="1"/>
+    </GridPane>
 
-            </children>
+    <HBox alignment="CENTER_LEFT"
+          spacing="16.0">
 
-            <padding>
-                <Insets bottom="16.0"
-                        left="16.0"
-                        right="16.0"
-                        top="16.0"/>
-            </padding>
+        <Button onAction="#registrarCliente"
+                styleClass="boton-primario"
+                text="Registrar Cliente"/>
 
-        </GridPane>
+        <Button onAction="#modificarCliente"
+                styleClass="boton-primario"
+                text="Modificar Cliente"/>
 
-        <HBox alignment="CENTER_LEFT"
-              spacing="16.0">
+        <TextField fx:id="campoBuscarId"
+                   promptText="ID del cliente"
+                   prefWidth="120.0"/>
 
-            <children>
+        <Button onAction="#buscarCliente"
+                styleClass="boton-primario"
+                text="Buscar Cliente"/>
 
-                <Button mnemonicParsing="false"
-                        onAction="#registrarCliente"
-                        styleClass="boton-primario"
-                        text="Registrar Cliente"/>
+        <Label fx:id="mensajeEstado"
+               styleClass="mensaje-estado"
+               text=""/>
 
-                <Button mnemonicParsing="false"
-                        onAction="#modificarCliente"
-                        styleClass="boton-primario"
-                        text="Modificar Cliente"/>
+    </HBox>
 
-                <Label fx:id="mensajeEstado"
-                       styleClass="mensaje-estado"
-                       text=""/>
+    <TableView fx:id="tablaClientes"
+               styleClass="tabla"
+               VBox.vgrow="ALWAYS">
 
-            </children>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+        </columnResizePolicy>
 
-        </HBox>
+        <columns>
+            <TableColumn fx:id="columnaId"
+                         prefWidth="80.0"
+                         text="ID"/>
 
-        <TableView fx:id="tablaClientes"
-                   styleClass="tabla"
-                   VBox.vgrow="ALWAYS">
+            <TableColumn fx:id="columnaNombre"
+                         prefWidth="320.0"
+                         text="Nombre"/>
 
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-            </columnResizePolicy>
+            <TableColumn fx:id="columnaEdad"
+                         prefWidth="120.0"
+                         text="Edad"/>
+        </columns>
 
-            <columns>
-
-                <TableColumn fx:id="columnaId"
-                             prefWidth="80.0"
-                             text="ID"/>
-
-                <TableColumn fx:id="columnaNombre"
-                             prefWidth="320.0"
-                             text="Nombre"/>
-
-                <TableColumn fx:id="columnaEdad"
-                             prefWidth="120.0"
-                             text="Edad"/>
-
-            </columns>
-
-        </TableView>
-
-    </children>
+    </TableView>
 
     <padding>
         <Insets bottom="24.0"

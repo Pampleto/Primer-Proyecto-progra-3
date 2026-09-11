@@ -14,8 +14,8 @@ import servicio.ClienteServicio;
 /**
  * Controla la vista de gestion de clientes.
  *
- * Permite registrar clientes, mostrar los clientes registrados
- * en una tabla, seleccionar un cliente y modificar sus datos.
+ * Permite registrar, buscar, seleccionar y modificar
+ * clientes desde la interfaz grafica.
  */
 public class ClienteController {
 
@@ -27,7 +27,11 @@ public class ClienteController {
     @FXML
     private TextField campoEdad;
 
-    // Etiqueta que muestra mensajes de error o exito.
+    // Campo donde se escribe el ID del cliente que se desea buscar.
+    @FXML
+    private TextField campoBuscarId;
+
+    // Etiqueta utilizada para mostrar mensajes al usuario.
     @FXML
     private Label mensajeEstado;
 
@@ -47,7 +51,7 @@ public class ClienteController {
     @FXML
     private TableColumn<Cliente, Integer> columnaEdad;
 
-    // Servicio encargado de gestionar los clientes.
+    // Servicio encargado de realizar las operaciones de clientes.
     private final ClienteServicio clienteServicio =
             new ClienteServicio();
 
@@ -55,14 +59,14 @@ public class ClienteController {
     private final ObservableList<Cliente> clientes =
             FXCollections.observableArrayList();
 
-    // Guarda el cliente que el usuario selecciona en la tabla.
+    // Cliente seleccionado actualmente en la tabla.
     private Cliente clienteSeleccionado;
 
     /**
-     * Inicializa la vista de gestion de clientes.
+     * Inicializa la vista de clientes.
      *
-     * Configura las columnas de la tabla y detecta cuando
-     * el usuario selecciona un cliente.
+     * Configura las columnas de la tabla, carga los clientes
+     * registrados y detecta cuando el usuario selecciona una fila.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -106,8 +110,8 @@ public class ClienteController {
      * Registra un nuevo cliente utilizando los datos
      * ingresados en el formulario.
      *
-     * Envia el nombre y la edad al servicio para validar
-     * y almacenar el cliente.
+     * Envia el nombre y la edad a ClienteServicio para
+     * validar y almacenar el cliente.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -126,7 +130,6 @@ public class ClienteController {
             );
 
             actualizarTabla();
-
             limpiarFormulario();
 
             mensajeEstado.setText(
@@ -144,8 +147,8 @@ public class ClienteController {
     /**
      * Modifica los datos del cliente seleccionado.
      *
-     * Utiliza el identificador del cliente seleccionado
-     * junto con el nuevo nombre y edad ingresados.
+     * Utiliza el ID del cliente seleccionado junto con
+     * el nombre y la edad escritos en el formulario.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -177,7 +180,6 @@ public class ClienteController {
             if (modificado) {
 
                 actualizarTabla();
-
                 limpiarFormulario();
 
                 mensajeEstado.setText(
@@ -195,6 +197,65 @@ public class ClienteController {
 
             mensajeEstado.setText(
                     e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Busca un cliente utilizando el ID ingresado.
+     *
+     * Obtiene el identificador escrito en el campo de busqueda
+     * y solicita a ClienteServicio buscar el cliente correspondiente.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
+     */
+    @FXML
+    protected void buscarCliente() {
+
+        String textoId = campoBuscarId.getText().trim();
+
+        if (textoId.isEmpty()) {
+
+            mensajeEstado.setText(
+                    "Debe ingresar el ID del cliente."
+            );
+
+            return;
+        }
+
+        try {
+
+            int id = Integer.parseInt(textoId);
+
+            Cliente cliente =
+                    clienteServicio.buscarClientePorId(id);
+
+            if (cliente != null) {
+
+                tablaClientes
+                        .getSelectionModel()
+                        .select(cliente);
+
+                tablaClientes.scrollTo(cliente);
+
+                cargarClienteSeleccionado(cliente);
+
+                mensajeEstado.setText(
+                        "Cliente encontrado correctamente."
+                );
+
+            } else {
+
+                mensajeEstado.setText(
+                        "No se encontro un cliente con ese ID."
+                );
+            }
+
+        } catch (NumberFormatException e) {
+
+            mensajeEstado.setText(
+                    "El ID debe ser un numero entero."
             );
         }
     }
@@ -221,18 +282,13 @@ public class ClienteController {
         campoEdad.setText(
                 String.valueOf(cliente.getEdad())
         );
-
-        mensajeEstado.setText(
-                "Cliente seleccionado: "
-                        + cliente.getNombre()
-        );
     }
 
     /**
      * Actualiza los clientes mostrados en la tabla.
      *
-     * Obtiene todos los clientes desde ClienteServicio
-     * y los coloca dentro de la lista observable.
+     * Obtiene todos los clientes registrados desde
+     * ClienteServicio y los coloca en la lista observable.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -257,6 +313,7 @@ public class ClienteController {
 
         campoNombre.clear();
         campoEdad.clear();
+        campoBuscarId.clear();
 
         clienteSeleccionado = null;
 
