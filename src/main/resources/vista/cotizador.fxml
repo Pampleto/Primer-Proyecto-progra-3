@@ -23,18 +23,45 @@
                 <ColumnConstraints hgrow="NEVER" minWidth="110.0"/>
                 <ColumnConstraints hgrow="ALWAYS" maxWidth="300.0" minWidth="200.0"/>
             </columnConstraints>
+
             <rowConstraints>
                 <RowConstraints/>
                 <RowConstraints/>
                 <RowConstraints/>
+                <RowConstraints/>
             </rowConstraints>
+
             <children>
-                <Label text="Destino:"/>
-                <ComboBox fx:id="comboTipoDestino" maxWidth="Infinity" promptText="Seleccione el destino" GridPane.columnIndex="1"/>
-                <Label text="Días de viaje:" GridPane.rowIndex="1"/>
-                <TextField fx:id="campoDias" promptText="Cantidad de días del viaje" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                <Button mnemonicParsing="false" onAction="#cotizar" styleClass="boton-primario" text="COTIZAR" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="2"/>
+                <Label text="ID del cliente:"/>
+                <TextField fx:id="campoIdCliente"
+                           promptText="ID del cliente"
+                           GridPane.columnIndex="1"/>
+
+                <Label text="Destino:"
+                       GridPane.rowIndex="1"/>
+                <ComboBox fx:id="comboTipoDestino"
+                          maxWidth="Infinity"
+                          promptText="Seleccione el destino"
+                          GridPane.columnIndex="1"
+                          GridPane.rowIndex="1"/>
+
+                <Label text="Días de viaje:"
+                       GridPane.rowIndex="2"/>
+                <TextField fx:id="campoDias"
+                           promptText="Cantidad de días del viaje"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="2"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#cotizar"
+                        styleClass="boton-primario"
+                        text="COTIZAR"
+                        GridPane.columnIndex="0"
+                        GridPane.columnSpan="2"
+                        GridPane.halignment="CENTER"
+                        GridPane.rowIndex="3"/>
             </children>
+
             <padding>
                 <Insets bottom="16.0" left="16.0" right="16.0" top="16.0"/>
             </padding>

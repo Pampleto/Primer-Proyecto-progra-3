@@ -9,6 +9,9 @@ import modelo.TipoDestino;
 import modelo.Viaje;
 import servicio.CotizadorServicio;
 import util.Validador;
+import modelo.Cliente;
+import servicio.ClienteServicio;
+import servicio.CotizacionServicio;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,10 @@ public class CotizadorController {
     // Selector del tipo de destino (nacional o internacional).
     @FXML
     private ComboBox<TipoDestino> comboTipoDestino;
+
+    // Campo donde el usuario indica el ID del cliente que realizará la contratación.
+    @FXML
+    private TextField campoIdCliente;
 
     // Campo donde se escribe la cantidad de dias del viaje.
     @FXML
@@ -74,8 +81,22 @@ public class CotizadorController {
     // Motor de cotizacion encargado de calcular los precios de los planes.
     private final CotizadorServicio cotizadorServicio = new CotizadorServicio();
 
+    // Servicio utilizado para consultar los clientes registrados.
+    private final ClienteServicio clienteServicio =
+            new ClienteServicio();
+
+    // Servicio utilizado para almacenar las cotizaciones contratadas.
+    private final CotizacionServicio cotizacionServicio =
+            new CotizacionServicio();
+
     // Planes disponibles en el sistema en el orden basico, total y extremos.
     private final List<PlanSeguro> planes = cotizadorServicio.obtenerPlanes();
+
+    // Viaje correspondiente a la cotizacion mostrada actualmente.
+    private Viaje viajeActual;
+
+    // Precios calculados actualmente para cada plan.
+    private Map<String, Double> preciosActuales;
 
     /**
      * Inicializa la vista del cotizador cargando los valores
@@ -101,10 +122,10 @@ public class CotizadorController {
         tarifaExtremos.setText(formatearColones(planes.get(2).getTarifaDiaria()));
 
         campoDias.textProperty().addListener((observable, anterior, nuevo) -> {
-            if (nuevo != null && !nuevo.isBlank()) {
-                recalcularCotizacion();
-            }
+            recalcularCotizacion();
         });
+
+        comboTipoDestino.setOnAction(event -> recalcularCotizacion());
 
         recalcularCotizacion();
     }
@@ -121,36 +142,27 @@ public class CotizadorController {
     }
 
     /**
-     * Muestra el mensaje de contratacion para el plan basico.
-     *
-     * No recibe parametros.
-     * No retorna ningun valor.
+     * Inicia la contratación del plan básico.
      */
     @FXML
     protected void contratarBasico() {
-        mostrarMensajeContratacion(planes.get(0).getNombre());
+        contratarPlan(planes.get(0));
     }
 
     /**
-     * Muestra el mensaje de contratacion para el plan de cobertura total.
-     *
-     * No recibe parametros.
-     * No retorna ningun valor.
+     * Inicia la contratación del plan de cobertura total.
      */
     @FXML
     protected void contratarTotal() {
-        mostrarMensajeContratacion(planes.get(1).getNombre());
+        contratarPlan(planes.get(1));
     }
 
     /**
-     * Muestra el mensaje de contratacion para el plan de deportes extremos.
-     *
-     * No recibe parametros.
-     * No retorna ningun valor.
+     * Inicia la contratación del plan de deportes extremos.
      */
     @FXML
     protected void contratarExtremos() {
-        mostrarMensajeContratacion(planes.get(2).getNombre());
+        contratarPlan(planes.get(2));
     }
 
     /**
@@ -171,20 +183,29 @@ public class CotizadorController {
         String textoDias = campoDias.getText().trim();
 
         if (!Validador.esCantidadDiasValida(textoDias)) {
+            viajeActual = null;
+            preciosActuales = null;
+
             mostrarPreciosSinDatos();
-            mensajeEstado.setText("La cantidad de dias debe ser un numero entero mayor que cero.");
+            mensajeEstado.setText(
+                    "La cantidad de dias debe ser un numero entero mayor que cero."
+            );
             return;
         }
 
         int dias = Integer.parseInt(textoDias);
-        Viaje viaje = new Viaje(comboTipoDestino.getValue(), dias);
 
-        // CotizadorServicio calcula los tres precios simultaneamente.
-        Map<String, Double> precios = cotizadorServicio.cotizar(viaje);
+        viajeActual = new Viaje(
+                comboTipoDestino.getValue(),
+                dias
+        );
 
-        precioBasico.setText(formatearPrecio(precios, planes.get(0)));
-        precioTotal.setText(formatearPrecio(precios, planes.get(1)));
-        precioExtremos.setText(formatearPrecio(precios, planes.get(2)));
+// CotizadorServicio calcula los tres precios simultaneamente.
+        preciosActuales = cotizadorServicio.cotizar(viajeActual);
+
+        precioBasico.setText(formatearPrecio(preciosActuales, planes.get(0)));
+        precioTotal.setText(formatearPrecio(preciosActuales, planes.get(1)));
+        precioExtremos.setText(formatearPrecio(preciosActuales, planes.get(2)));
 
         mensajeEstado.setText("Cotizacion actualizada para " + dias + " dias.");
     }
@@ -203,17 +224,81 @@ public class CotizadorController {
     }
 
     /**
-     * Muestra el mensaje informativo al presionar un boton de contratar.
+     * Registra la contratación del plan seleccionado para un cliente.
      *
-     * En esta fase del proyecto la contratacion es un esqueleto visual;
-     * la asignacion real del plan al cliente se integra en una fase
-     * posterior cuando exista la capa de repositorios y servicios.
+     * Verifica que el ID ingresado sea válido, que el cliente exista
+     * y que actualmente haya una cotización calculada.
      *
-     * @param nombrePlan nombre del plan que el usuario intenta contratar
+     * @param plan plan de seguro que se desea contratar
      */
-    private void mostrarMensajeContratacion(String nombrePlan) {
-        mensajeEstado.setText("La contratacion del " + nombrePlan
-                + " estara disponible en la siguiente fase del proyecto.");
+    private void contratarPlan(PlanSeguro plan) {
+
+        String textoId = campoIdCliente.getText().trim();
+
+        // Verifica que el ID sea un número entero.
+        if (!Validador.esEntero(textoId)) {
+            mensajeEstado.setText(
+                    "El ID del cliente debe ser un numero entero valido."
+            );
+            return;
+        }
+
+        int idCliente = Integer.parseInt(textoId);
+
+        // Los identificadores utilizados por los clientes comienzan en 1.
+        if (idCliente <= 0) {
+            mensajeEstado.setText(
+                    "El ID del cliente debe ser mayor que cero."
+            );
+            return;
+        }
+
+        // Busca al cliente registrado.
+        Cliente cliente = clienteServicio.buscarClientePorId(idCliente);
+
+        if (cliente == null) {
+            mensajeEstado.setText(
+                    "No se encontro un cliente con ese ID."
+            );
+            return;
+        }
+
+        // Comprueba que exista una cotización válida en pantalla.
+        if (viajeActual == null || preciosActuales == null) {
+            mensajeEstado.setText(
+                    "Debe realizar una cotizacion valida antes de contratar."
+            );
+            return;
+        }
+
+        // Obtiene exactamente el precio que actualmente ve el usuario.
+        Double precioFinal = preciosActuales.get(plan.getNombre());
+
+        if (precioFinal == null) {
+            mensajeEstado.setText(
+                    "No se pudo obtener el precio del plan seleccionado."
+            );
+            return;
+        }
+
+        try {
+            cotizacionServicio.registrarCotizacion(
+                    cliente,
+                    viajeActual,
+                    plan,
+                    precioFinal
+            );
+
+            mensajeEstado.setText(
+                    plan.getNombre()
+                            + " contratado correctamente por "
+                            + cliente.getNombre()
+                            + "."
+            );
+
+        } catch (IllegalArgumentException e) {
+            mensajeEstado.setText(e.getMessage());
+        }
     }
 
     /**
