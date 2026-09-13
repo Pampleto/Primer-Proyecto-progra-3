@@ -17,19 +17,9 @@ import java.util.List;
  */
 public class ClienteServicio {
 
-    // Repositorio generico utilizado para almacenar objetos Cliente.
-    private final Repositorio<Cliente> repositorioClientes;
-
-    /**
-     * Crea el servicio de clientes e inicializa
-     * el repositorio donde se almacenaran.
-     *
-     * No recibe parametros.
-     * No retorna ningun valor porque es un constructor.
-     */
-    public ClienteServicio() {
-        repositorioClientes = new Repositorio<>();
-    }
+    // Repositorio compartido por todas las instancias de ClienteServicio.
+    private static final Repositorio<Cliente> repositorioClientes =
+            new Repositorio<>();
 
     /**
      * Registra un nuevo cliente utilizando el nombre y la edad recibidos.
@@ -45,6 +35,7 @@ public class ClienteServicio {
      * @return cliente registrado correctamente
      * @throws IllegalArgumentException si el nombre o la edad no son validos
      */
+
     public Cliente registrarCliente(String nombre, String edadTexto) {
 
         if (!Validador.esNombreValido(nombre)) {
