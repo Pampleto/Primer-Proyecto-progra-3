@@ -101,7 +101,7 @@ public class CotizadorController {
     /**
      * Inicializa la vista del cotizador cargando los valores
      * de los planes en las tarjetas y configurando la recotizacion
-     * automatica cuando el usuario modifica los dias del viaje.
+     * automatica cuando el usuario modifica los dias o el destino.
      *
      * No recibe parametros.
      * No retorna ningun valor.
@@ -143,6 +143,10 @@ public class CotizadorController {
 
     /**
      * Inicia la contratación del plan básico.
+     *
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
      */
     @FXML
     protected void contratarBasico() {
@@ -151,6 +155,10 @@ public class CotizadorController {
 
     /**
      * Inicia la contratación del plan de cobertura total.
+     *
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
      */
     @FXML
     protected void contratarTotal() {
@@ -159,6 +167,10 @@ public class CotizadorController {
 
     /**
      * Inicia la contratación del plan de deportes extremos.
+     *
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
      */
     @FXML
     protected void contratarExtremos() {
@@ -171,7 +183,9 @@ public class CotizadorController {
      *
      * Solicita a CotizadorServicio el calculo simultaneo de los tres
      * precios para el viaje construido con el destino y los dias.
-     * Se invoca cada vez que el usuario modifica la cantidad de dias.
+     *
+     * Se invoca cada vez que el usuario modifica la cantidad de dias
+     * o el tipo de destino seleccionado.
      *
      * Valida que la cantidad de dias sea un numero entero positivo.
      * Si los datos son invalidos muestra un mensaje de error.
@@ -230,6 +244,7 @@ public class CotizadorController {
      * y que actualmente haya una cotización calculada.
      *
      * @param plan plan de seguro que se desea contratar
+     * No retorna ningun valor.
      */
     private void contratarPlan(PlanSeguro plan) {
 

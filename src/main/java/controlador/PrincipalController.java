@@ -84,6 +84,7 @@ public class PrincipalController {
      * en cada pantalla mientras se navega.
      *
      * @param rutaFxml ruta del archivo FXML dentro de la carpeta resources
+     * No retorna ningun valor.
      */
     private void mostrarVista(String rutaFxml) {
         try {
@@ -94,8 +95,8 @@ public class PrincipalController {
             }
             contenidoCentral.getChildren().setAll(vista);
         } catch (IOException e) {
-            // En la version final este error deberia notificarse al usuario
-            // en la interfaz, y no simplemente imprimirse en consola.
+
+            // Muestra el detalle del error en consola para facilitar su diagnostico.
             e.printStackTrace();
         }
     }

@@ -145,7 +145,7 @@ public class ClienteServicio {
     }
 
     /**
-     * Indica si actualmente existen clientes registrados.
+     * Indica si actualmente no existen clientes registrados.
      *
      * No recibe parametros.
      * Retorna true si no existen clientes almacenados

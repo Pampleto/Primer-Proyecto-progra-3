@@ -76,6 +76,7 @@ public class CotizacionServicio {
     /**
      * Obtiene todas las cotizaciones registradas.
      *
+     * No recibe parametros.
      * @return lista con las cotizaciones existentes
      */
     public List<Cotizacion> obtenerCotizaciones() {
@@ -103,6 +104,7 @@ public class CotizacionServicio {
     /**
      * Indica si actualmente no existen cotizaciones registradas.
      *
+     * No recibe parametros.
      * @return true si el repositorio esta vacio, false en caso contrario
      */
     public boolean estaVacio() {
@@ -112,6 +114,7 @@ public class CotizacionServicio {
     /**
      * Obtiene la cantidad total de cotizaciones registradas.
      *
+     * No recibe parametros.
      * @return número de cotizaciones almacenadas
      */
     public int cantidadCotizaciones() {

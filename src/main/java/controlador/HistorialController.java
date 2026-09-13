@@ -60,6 +60,9 @@ public class HistorialController {
 
     /**
      * Inicializa la tabla del historial y carga las cotizaciones existentes.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
      */
     @FXML
     protected void initialize() {
@@ -107,6 +110,9 @@ public class HistorialController {
 
     /**
      * Obtiene las cotizaciones almacenadas y actualiza la tabla.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
      */
     private void actualizarHistorial() {
 
