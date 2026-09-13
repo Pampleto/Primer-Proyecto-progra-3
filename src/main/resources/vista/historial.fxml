@@ -3,18 +3,80 @@
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="20.0" styleClass="vista" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controlador.HistorialController">
+<VBox spacing="16.0"
+      styleClass="vista"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="controlador.HistorialController">
+
     <stylesheets>
         <URL value="@../css/estilos.css"/>
     </stylesheets>
+
     <children>
-        <Label styleClass="titulo-vista" text="Historial de Cotizaciones"/>
-        <Label styleClass="texto-placeholder" text="Aún no hay cotizaciones registradas."/>
-        <Label fx:id="mensajeHistorial" styleClass="mensaje-estado" text="Las cotizaciones que se contraten aparecerán aquí en la siguiente fase del proyecto." wrapText="true"/>
+
+        <Label
+                styleClass="titulo-vista"
+                text="Historial de Cotizaciones"/>
+
+        <Label
+                fx:id="mensajeHistorial"
+                styleClass="mensaje-estado"
+                text="Aun no hay cotizaciones contratadas."
+                wrapText="true"/>
+
+        <TableView
+                fx:id="tablaCotizaciones"
+                VBox.vgrow="ALWAYS">
+
+            <columns>
+
+                <TableColumn
+                        fx:id="columnaId"
+                        prefWidth="70.0"
+                        text="ID"/>
+
+                <TableColumn
+                        fx:id="columnaCliente"
+                        prefWidth="180.0"
+                        text="Cliente"/>
+
+                <TableColumn
+                        fx:id="columnaDestino"
+                        prefWidth="150.0"
+                        text="Destino"/>
+
+                <TableColumn
+                        fx:id="columnaDias"
+                        prefWidth="100.0"
+                        text="Días"/>
+
+                <TableColumn
+                        fx:id="columnaPlan"
+                        prefWidth="190.0"
+                        text="Plan"/>
+
+                <TableColumn
+                        fx:id="columnaPrecio"
+                        prefWidth="150.0"
+                        text="Precio Final"/>
+
+            </columns>
+
+        </TableView>
+
     </children>
+
     <padding>
-        <Insets bottom="24.0" left="24.0" right="24.0" top="24.0"/>
+        <Insets
+                bottom="24.0"
+                left="24.0"
+                right="24.0"
+                top="24.0"/>
     </padding>
+
 </VBox>

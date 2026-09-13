@@ -67,7 +67,13 @@ public class PrincipalController {
      */
     @FXML
     protected void mostrarHistorial() {
-        mostrarVista("/vista/historial.fxml");
+        String rutaHistorial = "/vista/historial.fxml";
+
+        // Elimina la vista anterior del cache para cargar
+        // nuevamente las cotizaciones mas recientes.
+        vistas.remove(rutaHistorial);
+
+        mostrarVista(rutaHistorial);
     }
 
     /**
