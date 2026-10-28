@@ -1,119 +1,153 @@
 package servicio;
 
 import modelo.Cliente;
-import repositorio.Repositorio;
+import repositorio.ClienteRepository;
+import repositorio.ClienteRepositoryJdbc;
 import util.Validador;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Gestiona las operaciones relacionadas con los clientes.
- *
- * Esta clase funciona como intermediaria entre el controlador
- * de la interfaz y el repositorio generico.
- *
- * Permite registrar, consultar y modificar clientes utilizando
- * las validaciones creadas en la clase Validador.
+ * Gestiona las operaciones de clientes.
+ * Valida los datos y utiliza el repositorio JDBC.
  */
 public class ClienteServicio {
 
-    // Repositorio compartido por todas las instancias de ClienteServicio.
-    private static final Repositorio<Cliente> repositorioClientes =
-            new Repositorio<>();
+    private final ClienteRepository repositorioClientes;
 
     /**
-     * Registra un nuevo cliente utilizando el nombre y la edad recibidos.
-     *
-     * Primero valida que el nombre contenga solamente letras y espacios
-     * y que la edad sea un numero entero mayor que cero.
-     *
-     * Recibe el nombre y la edad del cliente como texto.
-     * Retorna el objeto Cliente que fue registrado.
-     *
-     * @param nombre nombre del cliente
-     * @param edadTexto edad del cliente recibida como texto
-     * @return cliente registrado correctamente
-     * @throws IllegalArgumentException si el nombre o la edad no son validos
+     * Inicializa el servicio con persistencia MySQL.
      */
-
-    public Cliente registrarCliente(String nombre, String edadTexto) {
-
-        if (!Validador.esNombreValido(nombre)) {
-            throw new IllegalArgumentException(
-                    "El nombre solo puede contener letras y espacios."
-            );
-        }
-
-        if (!Validador.esEdadValida(edadTexto)) {
-            throw new IllegalArgumentException(
-                    "La edad debe ser un numero entero mayor que cero."
-            );
-        }
-
-        int edad = Integer.parseInt(edadTexto);
-
-        Cliente cliente = new Cliente(nombre.trim(), edad);
-
-        repositorioClientes.agregar(cliente);
-
-        return cliente;
+    public ClienteServicio() {
+        this(new ClienteRepositoryJdbc());
     }
 
     /**
-     * Obtiene todos los clientes almacenados actualmente
-     * dentro del repositorio.
+     * Permite utilizar otra implementacion de repositorio.
      *
-     * No recibe parametros.
-     * Retorna una lista con todos los clientes registrados.
+     * @param repositorioClientes repositorio a utilizar
+     */
+    public ClienteServicio(
+            ClienteRepository repositorioClientes
+    ) {
+        this.repositorioClientes =
+                Objects.requireNonNull(repositorioClientes);
+    }
+
+    /**
+     * Valida y registra un nuevo cliente.
+     *
+     * @param nombre nombre ingresado
+     * @param edadTexto edad ingresada como texto
+     * @return cliente registrado con su ID
+     */
+    public Cliente registrarCliente(
+            String nombre,
+            String edadTexto
+    ) {
+
+        validarDatos(nombre, edadTexto);
+
+        Cliente nuevo = new Cliente(
+                nombre.trim(),
+                Integer.parseInt(edadTexto)
+        );
+
+        return repositorioClientes.guardar(nuevo);
+    }
+
+    /**
+     * Obtiene los clientes de MySQL.
      *
      * @return lista de clientes registrados
      */
     public List<Cliente> obtenerClientes() {
-        return repositorioClientes.obtenerTodos();
+        return repositorioClientes.listar();
     }
 
     /**
-     * Busca un cliente utilizando su identificador unico.
-     *
-     * Recorre los clientes almacenados en el repositorio
-     * hasta encontrar uno cuyo ID coincida con el recibido.
-     *
-     * Recibe el identificador del cliente que se desea buscar.
-     * Retorna el cliente encontrado o null si no existe.
+     * Busca un cliente por su ID.
      *
      * @param id identificador del cliente
-     * @return cliente encontrado o null si no existe
+     * @return cliente encontrado o null
      */
     public Cliente buscarClientePorId(int id) {
 
-        for (Cliente cliente : repositorioClientes.obtenerTodos()) {
-
-            if (cliente.getId() == id) {
-                return cliente;
-            }
+        if (id <= 0) {
+            return null;
         }
 
-        return null;
+        return repositorioClientes
+                .buscarPorId(id)
+                .orElse(null);
     }
 
     /**
-     * Modifica el nombre y la edad de un cliente existente.
+     * Modifica los datos de un cliente.
      *
-     * Primero valida que el nombre contenga solamente letras y espacios
-     * y que la edad sea un numero entero mayor que cero.
-     *
-     * Recibe el ID del cliente, el nuevo nombre y la nueva edad.
-     * Retorna true si el cliente fue modificado correctamente
-     * o false si el cliente no fue encontrado.
-     *
-     * @param id identificador del cliente que se desea modificar
-     * @param nombre nuevo nombre del cliente
-     * @param edadTexto nueva edad del cliente recibida como texto
-     * @return true si el cliente fue modificado, false si no fue encontrado
-     * @throws IllegalArgumentException si el nombre o la edad no son validos
+     * @param id identificador
+     * @param nombre nuevo nombre
+     * @param edadTexto nueva edad
+     * @return true si se modifico
      */
     public boolean modificarCliente(
             int id,
+            String nombre,
+            String edadTexto
+    ) {
+
+        validarDatos(nombre, edadTexto);
+
+        if (id <= 0) {
+            return false;
+        }
+
+        Cliente actualizado = new Cliente(
+                id,
+                nombre.trim(),
+                Integer.parseInt(edadTexto)
+        );
+
+        return repositorioClientes.actualizar(actualizado);
+    }
+
+    /**
+     * Elimina un cliente por identificador.
+     *
+     * @param id identificador del cliente
+     * @return true si se elimino
+     */
+    public boolean eliminarCliente(int id) {
+
+        if (id <= 0) {
+            return false;
+        }
+
+        return repositorioClientes.eliminar(id);
+    }
+
+    /**
+     * @return true si no existen clientes registrados
+     */
+    public boolean estaVacio() {
+        return repositorioClientes.contar() == 0;
+    }
+
+    /**
+     * @return cantidad de clientes en MySQL
+     */
+    public int cantidadClientes() {
+        return repositorioClientes.contar();
+    }
+
+    /**
+     * Valida el nombre y la edad recibidos.
+     *
+     * @param nombre nombre del cliente
+     * @param edadTexto edad escrita como texto
+     */
+    private void validarDatos(
             String nombre,
             String edadTexto
     ) {
@@ -129,43 +163,5 @@ public class ClienteServicio {
                     "La edad debe ser un numero entero mayor que cero."
             );
         }
-
-        Cliente cliente = buscarClientePorId(id);
-
-        if (cliente == null) {
-            return false;
-        }
-
-        int edad = Integer.parseInt(edadTexto);
-
-        cliente.setNombre(nombre.trim());
-        cliente.setEdad(edad);
-
-        return true;
-    }
-
-    /**
-     * Indica si actualmente no existen clientes registrados.
-     *
-     * No recibe parametros.
-     * Retorna true si no existen clientes almacenados
-     * o false si hay al menos un cliente registrado.
-     *
-     * @return true si el repositorio esta vacio, false en caso contrario
-     */
-    public boolean estaVacio() {
-        return repositorioClientes.estaVacio();
-    }
-
-    /**
-     * Obtiene la cantidad total de clientes registrados.
-     *
-     * No recibe parametros.
-     * Retorna el numero de clientes almacenados en el repositorio.
-     *
-     * @return cantidad de clientes registrados
-     */
-    public int cantidadClientes() {
-        return repositorioClientes.cantidad();
     }
 }

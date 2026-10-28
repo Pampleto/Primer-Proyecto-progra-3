@@ -1,45 +1,46 @@
 package modelo;
 
 /**
- * Representa a un cliente dentro del sistema de seguros de viaje.
- * Cada cliente posee un identificador unico, un nombre y una edad.
+ * Representa un cliente registrado en TravelSafe.
+ * El identificador es generado por MySQL.
  */
 public class Cliente {
 
-    // Contador utilizado para generar automaticamente
-    // un identificador diferente para cada cliente.
-    private static int contador = 1;
-
-    // Identificador unico del cliente.
-    private int id;
-
-    // Nombre del cliente.
+    private final int id;
     private String nombre;
-
-    // Edad del cliente.
     private int edad;
 
     /**
-     * Crea un nuevo cliente y genera automaticamente su identificador.
-     *
-     * Recibe el nombre y la edad del cliente.
-     * No retorna ningun valor porque es un constructor.
+     * Crea un cliente nuevo sin identificador.
+     * MySQL asignara su ID cuando se registre.
      *
      * @param nombre nombre del cliente
      * @param edad edad del cliente
      */
     public Cliente(String nombre, int edad) {
-        this.id = contador++;
+        this(0, nombre, edad);
+    }
+
+    /**
+     * Reconstruye un cliente con su ID existente.
+     *
+     * @param id identificador almacenado en MySQL
+     * @param nombre nombre del cliente
+     * @param edad edad del cliente
+     */
+    public Cliente(int id, String nombre, int edad) {
+        if (id < 0) {
+            throw new IllegalArgumentException(
+                    "El ID no puede ser negativo."
+            );
+        }
+
+        this.id = id;
         this.nombre = nombre;
         this.edad = edad;
     }
 
     /**
-     * Obtiene el identificador unico del cliente.
-     *
-     * No recibe parametros.
-     * Retorna el identificador del cliente.
-     *
      * @return identificador del cliente
      */
     public int getId() {
@@ -47,11 +48,6 @@ public class Cliente {
     }
 
     /**
-     * Obtiene el nombre almacenado del cliente.
-     *
-     * No recibe parametros.
-     * Retorna el nombre actual del cliente.
-     *
      * @return nombre del cliente
      */
     public String getNombre() {
@@ -59,23 +55,15 @@ public class Cliente {
     }
 
     /**
-     * Modifica el nombre actual del cliente.
+     * Modifica el nombre del cliente.
      *
-     * Recibe como parametro el nuevo nombre que se desea asignar.
-     * No retorna ningun valor.
-     *
-     * @param nombre nuevo nombre del cliente
+     * @param nombre nuevo nombre
      */
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
 
     /**
-     * Obtiene la edad almacenada del cliente.
-     *
-     * No recibe parametros.
-     * Retorna la edad actual del cliente.
-     *
      * @return edad del cliente
      */
     public int getEdad() {
@@ -83,12 +71,9 @@ public class Cliente {
     }
 
     /**
-     * Modifica la edad actual del cliente.
+     * Modifica la edad del cliente.
      *
-     * Recibe como parametro la nueva edad que se desea asignar.
-     * No retorna ningun valor.
-     *
-     * @param edad nueva edad del cliente
+     * @param edad nueva edad
      */
     public void setEdad(int edad) {
         this.edad = edad;

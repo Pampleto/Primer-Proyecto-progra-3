@@ -1,0 +1,6 @@
+# Configuracion de ejemplo para TravelSafe 2.0
+# No incluir contrasenas reales en este archivo.
+
+db.url=jdbc:mysql://localhost:3306/travelsafe_db?connectionTimeZone=LOCAL
+db.user=root
+db.password=

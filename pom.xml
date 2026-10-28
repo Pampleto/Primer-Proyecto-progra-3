@@ -19,6 +19,16 @@
 
     <dependencies>
 
+        <!-- ============================================= -->
+        <!-- JDBC - Conexion con la base de datos MySQL    -->
+        <!-- ============================================= -->
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.7.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
