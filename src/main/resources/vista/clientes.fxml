@@ -23,9 +23,11 @@
         <URL value="@../css/estilos.css"/>
     </stylesheets>
 
+    <!-- TITULO -->
     <Label styleClass="titulo-vista"
            text="Registro de Clientes"/>
 
+    <!-- FORMULARIO -->
     <GridPane hgap="12.0"
               vgap="12.0"
               styleClass="formulario">
@@ -67,31 +69,56 @@
 
     </GridPane>
 
-    <HBox alignment="CENTER_LEFT"
-          spacing="16.0">
+    <!-- ACCIONES DEL CRUD -->
+    <VBox spacing="12.0">
 
-        <Button onAction="#registrarCliente"
-                styleClass="boton-primario"
-                text="Registrar Cliente"/>
+        <!-- Primera fila: registrar, modificar, eliminar -->
+        <HBox alignment="CENTER_LEFT"
+              spacing="12.0">
 
-        <Button onAction="#modificarCliente"
-                styleClass="boton-primario"
-                text="Modificar Cliente"/>
+            <Button onAction="#registrarCliente"
+                    styleClass="boton-primario"
+                    prefWidth="190.0"
+                    text="Registrar Cliente"/>
 
-        <TextField fx:id="campoBuscarId"
-                   promptText="ID del cliente"
-                   prefWidth="120.0"/>
+            <Button onAction="#modificarCliente"
+                    styleClass="boton-primario"
+                    prefWidth="190.0"
+                    text="Modificar Cliente"/>
 
-        <Button onAction="#buscarCliente"
-                styleClass="boton-primario"
-                text="Buscar Cliente"/>
+            <Button onAction="#eliminarCliente"
+                    styleClass="boton-primario"
+                    prefWidth="190.0"
+                    text="Eliminar Cliente"/>
 
+        </HBox>
+
+        <!-- Segunda fila: busqueda -->
+        <HBox alignment="CENTER_LEFT"
+              spacing="12.0">
+
+            <Label text="Buscar por ID:"/>
+
+            <TextField fx:id="campoBuscarId"
+                       promptText="ID del cliente"
+                       prefWidth="150.0"/>
+
+            <Button onAction="#buscarCliente"
+                    styleClass="boton-primario"
+                    prefWidth="170.0"
+                    text="Buscar Cliente"/>
+
+        </HBox>
+
+        <!-- Mensajes del sistema -->
         <Label fx:id="mensajeEstado"
                styleClass="mensaje-estado"
+               wrapText="true"
                text=""/>
 
-    </HBox>
+    </VBox>
 
+    <!-- TABLA DE CLIENTES -->
     <TableView fx:id="tablaClientes"
                styleClass="tabla"
                VBox.vgrow="ALWAYS">
@@ -101,6 +128,7 @@
         </columnResizePolicy>
 
         <columns>
+
             <TableColumn fx:id="columnaId"
                          prefWidth="80.0"
                          text="ID"/>
@@ -112,6 +140,7 @@
             <TableColumn fx:id="columnaEdad"
                          prefWidth="120.0"
                          text="Edad"/>
+
         </columns>
 
     </TableView>
