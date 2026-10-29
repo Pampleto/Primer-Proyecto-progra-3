@@ -4,6 +4,8 @@ import modelo.Cliente;
 import modelo.Cotizacion;
 import modelo.PlanSeguro;
 import modelo.Viaje;
+import modelo.FiltroCotizaciones;
+import modelo.ResumenCotizaciones;
 import repositorio.CotizacionRepository;
 import repositorio.CotizacionRepositoryJdbc;
 import repositorio.PersistenciaException;
@@ -180,5 +182,26 @@ public class CotizacionServicio {
      */
     public int cantidadCotizaciones() {
         return repositorioCotizaciones.contar();
+    }
+
+    /**
+     * Consulta el historial en MySQL con los filtros presentes combinados con AND.
+     *
+     * @param filtros cliente, destino y rango inclusivo de fechas; null consulta todos
+     * @return lista ordenada por ID, vacia si no hay coincidencias
+     * @throws PersistenciaException si falla la consulta
+     */
+    public List<Cotizacion> buscarCotizaciones(FiltroCotizaciones filtros) {
+        return repositorioCotizaciones.buscar(filtros == null ? FiltroCotizaciones.todos() : filtros);
+    }
+
+    /**
+     * Consulta el resumen global sin recalcular precios ni cargar el historial.
+     *
+     * @return total, suma historica decimal y cantidades por ID de plan
+     * @throws PersistenciaException si falla la consulta
+     */
+    public ResumenCotizaciones obtenerResumen() {
+        return repositorioCotizaciones.obtenerResumen();
     }
 }

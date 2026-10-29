@@ -1,6 +1,8 @@
 package repositorio;
 
 import modelo.Cotizacion;
+import modelo.FiltroCotizaciones;
+import modelo.ResumenCotizaciones;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,4 +57,21 @@ public interface CotizacionRepository {
      * @return cantidad total de cotizaciones persistidas
      */
     int contar();
+
+    /**
+     * Consulta MySQL combinando los criterios presentes con AND.
+     *
+     * @param filtros criterios opcionales; null equivale a todos vacios
+     * @return cotizaciones ordenadas por ID, lista vacia si no hay coincidencias
+     * @throws PersistenciaException si falla la consulta
+     */
+    List<Cotizacion> buscar(FiltroCotizaciones filtros);
+
+    /**
+     * Agrega en SQL el total, la suma historica y las cantidades por plan.
+     *
+     * @return resumen global, con cantidades y monto cero si no hay cotizaciones
+     * @throws PersistenciaException si falla la consulta
+     */
+    ResumenCotizaciones obtenerResumen();
 }

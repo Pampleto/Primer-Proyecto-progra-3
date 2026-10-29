@@ -5,11 +5,15 @@ import modelo.Cotizacion;
 import modelo.PlanSeguro;
 import modelo.TipoDestino;
 import modelo.Viaje;
+import modelo.FiltroCotizaciones;
+import modelo.ResumenCotizaciones;
 import org.junit.jupiter.api.Test;
 import repositorio.CotizacionRepository;
 import repositorio.PersistenciaException;
 
 import java.sql.SQLException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -143,12 +147,53 @@ class CotizacionServicioTest {
         assertTrue(repositorio.datos.isEmpty());
     }
 
+    @Test
+    void delegaFiltrosCombinadosSinCargarTodoElHistorial() {
+        var filtros = new FiltroCotizaciones(7, TipoDestino.INTERNACIONAL,
+                LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 29));
+        Cotizacion resultado = servicio.registrarCotizacion(cliente, viaje, plan, 150.25);
+        repositorio.resultadosBusqueda = List.of(resultado);
+        assertEquals(List.of(resultado), servicio.buscarCotizaciones(filtros));
+        assertSame(filtros, repositorio.ultimosFiltros);
+        assertEquals(0, repositorio.listados);
+    }
+
+    @Test
+    void filtrosVaciosYResultadosVaciosSonConsistentes() {
+        assertTrue(servicio.buscarCotizaciones(null).isEmpty());
+        assertEquals(FiltroCotizaciones.todos(), repositorio.ultimosFiltros);
+        assertTrue(servicio.buscarCotizaciones(FiltroCotizaciones.todos()).isEmpty());
+        assertEquals(0, repositorio.listados);
+    }
+
+    @Test
+    void delegaEstadisticasDecimalesSinRecalcularNiListar() {
+        repositorio.resumen = new ResumenCotizaciones(2, new BigDecimal("0.30"),
+                Map.of(1, 1L, 2, 1L, 3, 0L));
+        assertSame(repositorio.resumen, servicio.obtenerResumen());
+        assertEquals(new BigDecimal("0.30"), servicio.obtenerResumen().sumaPreciosFinales());
+        assertEquals(0, repositorio.listados);
+        assertEquals(0, repositorio.inserciones);
+    }
+
+    @Test
+    void propagaErroresDeFiltrosYEstadisticas() {
+        repositorio.error = new PersistenciaException("Fallo simulado", new SQLException());
+        assertSame(repositorio.error, assertThrows(PersistenciaException.class,
+                () -> servicio.buscarCotizaciones(FiltroCotizaciones.todos())));
+        assertSame(repositorio.error, assertThrows(PersistenciaException.class, servicio::obtenerResumen));
+    }
+
     /** Doble de prueba; no se utiliza en la aplicacion ni sustituye pruebas MySQL. */
     private static class RepositorioPrueba implements CotizacionRepository {
         final Map<Integer, Cotizacion> datos = new LinkedHashMap<>();
         int inserciones;
         Cotizacion ultimaNueva;
         PersistenciaException error;
+        FiltroCotizaciones ultimosFiltros;
+        List<Cotizacion> resultadosBusqueda = List.of();
+        ResumenCotizaciones resumen = new ResumenCotizaciones(0, new BigDecimal("0.00"), Map.of());
+        int listados;
 
         private void comprobarConexion() {
             if (error != null) throw error;
@@ -166,6 +211,7 @@ class CotizacionServicioTest {
 
         public List<Cotizacion> listar() {
             comprobarConexion();
+            listados++;
             return new ArrayList<>(datos.values());
         }
 
@@ -187,6 +233,17 @@ class CotizacionServicioTest {
         public int contar() {
             comprobarConexion();
             return datos.size();
+        }
+
+        public List<Cotizacion> buscar(FiltroCotizaciones filtros) {
+            comprobarConexion();
+            ultimosFiltros = filtros;
+            return resultadosBusqueda;
+        }
+
+        public ResumenCotizaciones obtenerResumen() {
+            comprobarConexion();
+            return resumen;
         }
     }
 }

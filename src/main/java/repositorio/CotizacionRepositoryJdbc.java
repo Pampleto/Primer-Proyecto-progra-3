@@ -9,6 +9,8 @@ import modelo.PlanDeportesExtremos;
 import modelo.PlanSeguro;
 import modelo.TipoDestino;
 import modelo.Viaje;
+import modelo.FiltroCotizaciones;
+import modelo.ResumenCotizaciones;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -17,14 +19,42 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Persistencia de cotizaciones mediante JDBC y MySQL.
  */
 public class CotizacionRepositoryJdbc implements CotizacionRepository {
+
+    private final ProveedorConexion proveedorConexion;
+
+    /** Inicializa JDBC con la configuracion de conexion existente. */
+    public CotizacionRepositoryJdbc() {
+        this(ConexionBD::getConexion);
+    }
+
+    /**
+     * Permite simular JDBC desde pruebas del mismo paquete sin crear credenciales.
+     *
+     * @param proveedorConexion fabrica de conexiones que el repositorio cerrara
+     */
+    CotizacionRepositoryJdbc(ProveedorConexion proveedorConexion) {
+        this.proveedorConexion = Objects.requireNonNull(proveedorConexion);
+    }
+
+    /** Fabrica interna que conserva las excepciones comprobadas de JDBC. */
+    @FunctionalInterface
+    interface ProveedorConexion {
+        /** @return conexion abierta @throws SQLException si falla la conexion */
+        Connection abrir() throws SQLException;
+    }
 
     private static final String CONSULTA = """
             SELECT c.id, c.cliente_id, cl.nombre AS cliente_nombre,
@@ -57,7 +87,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
                 ) VALUES (?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conexion = ConexionBD.getConexion();
+        try (Connection conexion = proveedorConexion.abrir();
              PreparedStatement ps = conexion.prepareStatement(
                      sql, Statement.RETURN_GENERATED_KEYS)) {
             asignarDatos(ps, cotizacion, planId, precio);
@@ -158,17 +188,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
      */
     @Override
     public List<Cotizacion> listar() {
-        List<Cotizacion> resultado = new ArrayList<>();
-        try (Connection conexion = ConexionBD.getConexion();
-             PreparedStatement ps = conexion.prepareStatement(CONSULTA + " ORDER BY c.id");
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                resultado.add(mapear(rs));
-            }
-            return resultado;
-        } catch (SQLException e) {
-            throw error("obtener la lista de cotizaciones", e);
-        }
+        return buscar(FiltroCotizaciones.todos());
     }
 
     /**
@@ -180,7 +200,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
      */
     @Override
     public Optional<Cotizacion> buscarPorId(int id) {
-        try (Connection conexion = ConexionBD.getConexion();
+        try (Connection conexion = proveedorConexion.abrir();
              PreparedStatement ps = conexion.prepareStatement(CONSULTA + " WHERE c.id = ?")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -212,7 +232,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
                     cantidad_dias = ?, precio_final = ?
                 WHERE id = ?
                 """;
-        try (Connection conexion = ConexionBD.getConexion();
+        try (Connection conexion = proveedorConexion.abrir();
              PreparedStatement ps = conexion.prepareStatement(sql)) {
             asignarDatos(ps, cotizacion, obtenerIdPlan(cotizacion.getPlan()), precio);
             ps.setInt(6, cotizacion.getId());
@@ -231,7 +251,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
      */
     @Override
     public boolean eliminar(int id) {
-        try (Connection conexion = ConexionBD.getConexion();
+        try (Connection conexion = proveedorConexion.abrir();
              PreparedStatement ps = conexion.prepareStatement(
                      "DELETE FROM cotizaciones WHERE id = ?")) {
             ps.setInt(1, id);
@@ -249,7 +269,7 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
      */
     @Override
     public int contar() {
-        try (Connection conexion = ConexionBD.getConexion();
+        try (Connection conexion = proveedorConexion.abrir();
              PreparedStatement ps = conexion.prepareStatement("SELECT COUNT(*) FROM cotizaciones");
              ResultSet rs = ps.executeQuery()) {
             if (!rs.next()) {
@@ -258,6 +278,80 @@ public class CotizacionRepositoryJdbc implements CotizacionRepository {
             return rs.getInt(1);
         } catch (SQLException e) {
             throw error("contar las cotizaciones", e);
+        }
+    }
+
+    /**
+     * Consulta el historial con filtros opcionales parametrizados.
+     * Las fechas incluyen dias completos de fecha_contratacion (DATETIME sin fracciones).
+     *
+     * @param filtros criterios combinados con AND; null equivale a todos
+     * @return resultados ordenados por ID, lista vacia si no hay coincidencias
+     * @throws PersistenciaException si falla la consulta o el mapeo
+     */
+    @Override
+    public List<Cotizacion> buscar(FiltroCotizaciones filtros) {
+        FiltroCotizaciones criterios = filtros == null ? FiltroCotizaciones.todos() : filtros;
+        StringBuilder sql = new StringBuilder(CONSULTA).append(" WHERE 1 = 1");
+        if (criterios.clienteId() != null) sql.append(" AND c.cliente_id = ?");
+        if (criterios.destino() != null) sql.append(" AND c.tipo_destino = ?");
+        if (criterios.fechaDesde() != null) sql.append(" AND c.fecha_contratacion >= ?");
+        if (criterios.fechaHasta() != null) sql.append(" AND c.fecha_contratacion <= ?");
+        sql.append(" ORDER BY c.id");
+
+        try (Connection conexion = proveedorConexion.abrir();
+             PreparedStatement ps = conexion.prepareStatement(sql.toString())) {
+            int indice = 1;
+            if (criterios.clienteId() != null) ps.setInt(indice++, criterios.clienteId());
+            if (criterios.destino() != null) ps.setString(indice++, criterios.destino().name());
+            if (criterios.fechaDesde() != null) {
+                ps.setTimestamp(indice++, Timestamp.valueOf(criterios.fechaDesde().atStartOfDay()));
+            }
+            if (criterios.fechaHasta() != null) {
+                ps.setTimestamp(indice, Timestamp.valueOf(criterios.fechaHasta().atTime(LocalTime.of(23, 59, 59))));
+            }
+            List<Cotizacion> resultado = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) resultado.add(mapear(rs));
+            }
+            return resultado;
+        } catch (SQLException e) {
+            throw error("buscar en el historial de cotizaciones", e);
+        }
+    }
+
+    /**
+     * Obtiene las agregaciones globales en una sola consulta SQL.
+     * El LEFT JOIN incluye planes sin cotizaciones; SUM usa solo precios historicos.
+     *
+     * @return total, suma decimal y cantidades por ID de plan
+     * @throws PersistenciaException si falla la consulta
+     */
+    @Override
+    public ResumenCotizaciones obtenerResumen() {
+        String sql = """
+                SELECT p.id AS plan_id, COUNT(c.id) AS cantidad,
+                       (SELECT COUNT(*) FROM cotizaciones) AS total,
+                       (SELECT COALESCE(SUM(precio_final), 0) FROM cotizaciones) AS suma_total
+                FROM planes_seguro p
+                LEFT JOIN cotizaciones c ON c.plan_id = p.id
+                GROUP BY p.id
+                ORDER BY p.id
+                """;
+        try (Connection conexion = proveedorConexion.abrir();
+             PreparedStatement ps = conexion.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            long total = 0;
+            BigDecimal suma = new BigDecimal("0.00");
+            Map<Integer, Long> cantidades = new LinkedHashMap<>();
+            while (rs.next()) {
+                total = rs.getLong("total");
+                suma = rs.getBigDecimal("suma_total");
+                cantidades.put(rs.getInt("plan_id"), rs.getLong("cantidad"));
+            }
+            return new ResumenCotizaciones(total, suma, cantidades);
+        } catch (SQLException e) {
+            throw error("obtener estadisticas de cotizaciones", e);
         }
     }
 
