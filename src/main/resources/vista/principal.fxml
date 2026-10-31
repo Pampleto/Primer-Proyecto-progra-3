@@ -29,7 +29,8 @@
             <children>
                 <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#mostrarClientes" styleClass="boton-menu" text="Clientes"/>
                 <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#mostrarCotizador" styleClass="boton-menu" text="Cotizar"/>
-                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#mostrarHistorial" styleClass="boton-menu" text="Historial"/>
+                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#mostrarHistorial" styleClass="boton-menu" text="Historial"/>
+                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#mostrarEstadisticas" styleClass="boton-menu" text="Estadísticas"/>
             </children>
         </VBox>
     </left>

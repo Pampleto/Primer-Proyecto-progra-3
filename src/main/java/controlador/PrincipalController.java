@@ -59,7 +59,7 @@ public class PrincipalController {
         mostrarVista("/vista/cotizador.fxml");
     }
 
-    /**
+        /**
      * Muestra la vista del historial en el panel central.
      *
      * No recibe parametros.
@@ -74,6 +74,23 @@ public class PrincipalController {
         vistas.remove(rutaHistorial);
 
         mostrarVista(rutaHistorial);
+    }
+
+    /**
+     * Muestra la vista de estadísticas en el panel central.
+     *
+     * No recibe parametros.
+     * No retorna ningun valor.
+     */
+    @FXML
+    protected void mostrarEstadisticas() {
+        String rutaEstadisticas = "/vista/estadisticas.fxml";
+
+        // Elimina la vista anterior del cache para recalcular
+        // las estadísticas más recientes al volver a entrar.
+        vistas.remove(rutaEstadisticas);
+
+        mostrarVista(rutaEstadisticas);
     }
 
     /**

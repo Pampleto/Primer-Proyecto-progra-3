@@ -173,3 +173,27 @@
 .boton-contratar:hover {
     -fx-background-color: #1e8c4c;
 }
+
+/* -------------------- Acciones secundarias -------------------- */
+
+.boton-secundario {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1f6fb2;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-border-color: #1f6fb2;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 10 18 10 18;
+    -fx-cursor: hand;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: rgba(31, 58, 95, 0.06);
+}
+
+.etiqueta-filtro {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c4a74;
+}

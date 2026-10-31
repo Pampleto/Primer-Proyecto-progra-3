@@ -12,6 +12,8 @@ import util.Validador;
 import modelo.Cliente;
 import servicio.ClienteServicio;
 import servicio.CotizacionServicio;
+import repositorio.PersistenciaException;
+import util.Dialogos;
 
 import java.util.List;
 import java.util.Map;
@@ -268,16 +270,6 @@ public class CotizadorController {
             return;
         }
 
-        // Busca al cliente registrado.
-        Cliente cliente = clienteServicio.buscarClientePorId(idCliente);
-
-        if (cliente == null) {
-            mensajeEstado.setText(
-                    "No se encontro un cliente con ese ID."
-            );
-            return;
-        }
-
         // Comprueba que exista una cotización válida en pantalla.
         if (viajeActual == null || preciosActuales == null) {
             mensajeEstado.setText(
@@ -297,6 +289,17 @@ public class CotizadorController {
         }
 
         try {
+            // Busca al cliente registrado; puede fallar la base de datos.
+            Cliente cliente = clienteServicio.buscarClientePorId(idCliente);
+
+            if (cliente == null) {
+                mensajeEstado.setText(
+                        "No se encontro un cliente con ese ID."
+                );
+                return;
+            }
+
+            // Registra la contratación real en MySQL.
             cotizacionServicio.registrarCotizacion(
                     cliente,
                     viajeActual,
@@ -311,8 +314,37 @@ public class CotizadorController {
                             + "."
             );
 
+            Dialogos.mostrarInformacion(
+                    "Contratación exitosa",
+                    plan.getNombre()
+                            + " fue contratado por "
+                            + cliente.getNombre()
+                            + " en la base de datos."
+            );
+
         } catch (IllegalArgumentException e) {
+            // Errores de validación de datos del modelo.
             mensajeEstado.setText(e.getMessage());
+        } catch (PersistenciaException e) {
+            // Fallo de la base de datos MySQL: notifica al usuario de forma clara.
+            mensajeEstado.setText(
+                    "Error de base de datos: " + e.getMessage()
+            );
+            Dialogos.mostrarError(
+                    "Error de base de datos",
+                    "No se pudo registrar la cotización en MySQL.\n"
+                            + e.getMessage()
+            );
+        } catch (Exception e) {
+            // Cualquier otro error inesperado (incluido SQLException no envuelto).
+            mensajeEstado.setText(
+                    "Error inesperado: " + e.getMessage()
+            );
+            Dialogos.mostrarError(
+                    "Error inesperado",
+                    "Ocurrió un error al contratar el plan.\n"
+                            + e.getMessage()
+            );
         }
     }
 
