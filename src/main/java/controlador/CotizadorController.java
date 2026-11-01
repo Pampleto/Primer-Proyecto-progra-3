@@ -133,17 +133,6 @@ public class CotizadorController {
     }
 
     /**
-     * Recalcula la cotizacion cuando el usuario presiona el boton COTIZAR.
-     *
-     * No recibe parametros.
-     * No retorna ningun valor.
-     */
-    @FXML
-    protected void cotizar() {
-        recalcularCotizacion();
-    }
-
-    /**
      * Inicia la contratación del plan básico.
      *
      *

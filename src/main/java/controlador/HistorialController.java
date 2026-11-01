@@ -139,6 +139,11 @@ public class HistorialController {
 
         tablaCotizaciones.setItems(cotizaciones);
 
+        // Ajusta proporcionalmente las columnas al ancho de la tabla.
+        tablaCotizaciones.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS
+        );
+
         comboTipoDestino.getItems().setAll(TipoDestino.values());
         comboTipoDestino.setPromptText("Cualquiera");
 
