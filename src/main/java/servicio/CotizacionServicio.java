@@ -26,6 +26,7 @@ import java.util.Objects;
 public class CotizacionServicio {
 
     private final CotizacionRepository repositorioCotizaciones;
+    private final java.util.function.IntConsumer notificador;
 
     /**
      * Inicializa el servicio con persistencia JDBC para los controladores actuales.
@@ -41,7 +42,13 @@ public class CotizacionServicio {
      * @throws NullPointerException si el repositorio es nulo
      */
     public CotizacionServicio(CotizacionRepository repositorioCotizaciones) {
+        this(repositorioCotizaciones, red.RedCotizaciones::notificar);
+    }
+
+    public CotizacionServicio(CotizacionRepository repositorioCotizaciones,
+                              java.util.function.IntConsumer notificador) {
         this.repositorioCotizaciones = Objects.requireNonNull(repositorioCotizaciones);
+        this.notificador = Objects.requireNonNull(notificador);
     }
 
     /**
@@ -65,7 +72,13 @@ public class CotizacionServicio {
         validarDatos(cliente, viaje, plan, precioFinal);
         Cotizacion cotizacion = new Cotizacion(cliente, viaje, plan, precioFinal);
         // Una sola insercion por llamada; se conserva el ID devuelto por MySQL.
-        return repositorioCotizaciones.guardar(cotizacion);
+        Cotizacion guardada = repositorioCotizaciones.guardar(cotizacion);
+        try {
+            notificador.accept(guardada.getId());
+        } catch (RuntimeException e) {
+            System.err.println("[sockets] Cotizacion guardada; fallo al notificar");
+        }
+        return guardada;
     }
 
     /**

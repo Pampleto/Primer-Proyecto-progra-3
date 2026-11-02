@@ -24,6 +24,16 @@ public class PrincipalController {
     // Guarda las vistas ya cargadas para conservar su estado
     // al navegar de una pantalla a otra.
     private final Map<String, Node> vistas = new HashMap<>();
+    private HistorialController historial;
+
+    /** Ejecutado en JavaFX; la consulta existente usa un Task en segundo plano. */
+    public void recibirNotificacion(int id) {
+        System.out.println("[sockets] Otra instancia confirmo la cotizacion " + id);
+        Node vista = vistas.get("/vista/historial.fxml");
+        if (historial != null && vista != null && contenidoCentral.getChildren().contains(vista)) {
+            historial.buscar();
+        }
+    }
 
     /**
      * Inicializa la ventana principal cargando la vista de clientes
@@ -107,7 +117,9 @@ public class PrincipalController {
         try {
             Node vista = vistas.get(rutaFxml);
             if (vista == null) {
-                vista = new FXMLLoader(getClass().getResource(rutaFxml)).load();
+                FXMLLoader loader = new FXMLLoader(getClass().getResource(rutaFxml));
+                vista = loader.load();
+                if ("/vista/historial.fxml".equals(rutaFxml)) historial = loader.getController();
                 vistas.put(rutaFxml, vista);
             }
             contenidoCentral.getChildren().setAll(vista);

@@ -15,6 +15,20 @@ import java.util.Objects;
  * CSS y la muestra en pantalla.
  */
 public class HelloApplication extends Application {
+    private red.RedCotizaciones redCotizaciones;
+    private controlador.PrincipalController principal;
+
+    @Override
+    public void init() {
+        redCotizaciones = red.RedCotizaciones.iniciar(id -> javafx.application.Platform.runLater(() -> {
+            if (principal != null) principal.recibirNotificacion(id);
+        }));
+    }
+
+    @Override
+    public void stop() {
+        if (redCotizaciones != null) redCotizaciones.close();
+    }
 
     /**
      * Punto de entrada grafico de la aplicacion.
@@ -29,6 +43,7 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("/vista/principal.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1000, 640);
+        principal = fxmlLoader.getController();
         scene.getStylesheets().add(Objects.requireNonNull(
                 HelloApplication.class.getResource("/css/estilos.css")).toExternalForm());
         stage.setTitle("TravelSafe - Cotizador de Seguros de Viaje");

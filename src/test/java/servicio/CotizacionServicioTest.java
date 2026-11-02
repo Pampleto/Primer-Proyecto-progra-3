@@ -35,6 +35,44 @@ class CotizacionServicioTest {
     private final PlanSeguro plan = cotizador.obtenerPlanes().getFirst();
 
     @Test
+    void notificaSoloDespuesDeGuardarConIdPersistenteYConservaDatos() {
+        List<Integer> avisos = new ArrayList<>();
+        var conRed = new CotizacionServicio(repositorio, id -> {
+            assertTrue(repositorio.datos.containsKey(id));
+            avisos.add(id);
+        });
+        Cotizacion guardada = conRed.registrarCotizacion(cliente, viaje, plan, 150.25);
+        assertEquals(List.of(guardada.getId()), avisos);
+        assertEquals(1, repositorio.inserciones);
+        assertEquals(150.25, guardada.getPrecioFinal());
+        assertSame(cliente, guardada.getCliente());
+        assertSame(viaje, guardada.getViaje());
+        assertSame(plan, guardada.getPlan());
+        conRed.obtenerCotizaciones();
+        conRed.buscarCotizacionPorId(guardada.getId());
+        assertEquals(1, avisos.size());
+    }
+
+    @Test
+    void falloJdbcNoEmiteNotificacion() {
+        List<Integer> avisos = new ArrayList<>();
+        var conRed = new CotizacionServicio(repositorio, avisos::add);
+        repositorio.error = new PersistenciaException("Fallo simulado", new SQLException());
+        assertThrows(PersistenciaException.class,
+                () -> conRed.registrarCotizacion(cliente, viaje, plan, 150));
+        assertTrue(avisos.isEmpty());
+    }
+
+    @Test
+    void falloDelNotificadorNoInvalidaCotizacionGuardada() {
+        var conRed = new CotizacionServicio(repositorio, id -> { throw new IllegalStateException("Red"); });
+        Cotizacion guardada = conRed.registrarCotizacion(cliente, viaje, plan, 150.25);
+        assertSame(guardada, repositorio.datos.get(guardada.getId()));
+        assertEquals(150.25, guardada.getPrecioFinal());
+        assertEquals(1, repositorio.inserciones);
+    }
+
+    @Test
     void constructorActualUsaJdbcYReportaConfiguracionAusente() {
         assumeFalse(Files.isRegularFile(Path.of("db.properties")));
         PersistenciaException error = assertThrows(PersistenciaException.class,
